@@ -1,0 +1,149 @@
+from flask import Flask, render_template, request, redirect, url_for,send_file
+from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
+import numpy as np
+from werkzeug.security import generate_password_hash, check_password_hash
+from create_database import create_connection, create_table, create_table2
+from flask_socketio import SocketIO, emit
+import pdfkit
+# from trans_api import start_background_thread
+
+
+app = Flask(__name__)
+app.secret_key = '123456789'  # Required for session management
+socketio = SocketIO(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'signin'
+
+class User(UserMixin):
+    def __init__(self, id, name, email):
+        self.id = id
+        self.name = name
+        self.email = email
+
+
+create_table()
+create_table2()
+
+
+@app.route('/', methods=['POST', 'GET'])
+def index():
+    if request.method == 'POST':
+        name = request.form['Username']
+        email = request.form['Email']
+        password = request.form['Password2']
+
+        conn = create_connection()
+        c = conn.cursor()
+
+        c.execute('SELECT * FROM students WHERE name = ?', (name,))
+        existing_user = c.fetchone()
+
+        if existing_user:
+            error = "User already exists"
+            conn.close()
+            return render_template('login.html', error=error)
+        else:
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+            c.execute('''INSERT INTO students (name, email, password) 
+                         VALUES (?, ?, ?)''', (name, email, hashed_password))
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for('student'))
+
+    return render_template('login.html')
+
+@app.route('/instructor', methods=['POST', 'GET'])
+def instructor():
+    if request.method == 'POST':
+        name = request.form['Username']
+        email = request.form['Email']
+        password = request.form['Password2']
+
+        conn = create_connection()
+        c = conn.cursor()
+
+        c.execute('SELECT * FROM instructors WHERE name = ?', (name,))
+        existing_user = c.fetchone()
+
+        if existing_user:
+            error = "User already exists"
+            conn.close()
+            return render_template('login_instructor.html', error=error)
+        else:
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+            c.execute('''INSERT INTO instructors (name, email, password) 
+                         VALUES (?, ?, ?)''', (name, email, hashed_password))
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for('lecture'))
+
+    return render_template('login_instructor.html')
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = create_connection()
+    c = conn.cursor()
+    c.execute('SELECT * FROM students WHERE id = ?', (user_id,))
+    user = c.fetchone()
+    conn.close()
+    if user:
+        return User(id=user[0], name=user[1], email=user[2])
+    return None
+
+@app.route('/signin', methods=['POST', 'GET'])
+def signin():
+    if request.method == 'POST':
+        name = request.form['Username']
+        password = request.form['Password2']
+
+        print(name, password)
+
+        conn = create_connection()
+        c = conn.cursor()
+
+        c.execute('SELECT * FROM students WHERE name = ?', (name,))
+        user = c.fetchone()
+        conn.close()
+        print(user[3])
+
+        if user and check_password_hash(user[3], password):
+            user_obj = User(id=user[0], name=user[1], email=user[2])
+            login_user(user_obj)
+            return redirect(url_for('/'))
+        else:
+            error = "Invalid username or password"
+            return render_template('signin.html', error=error)
+
+    return render_template('signin.html')
+
+transcription = ""
+
+@app.route('/lecture')
+def lecture():
+    return render_template('instructor.html')
+
+@app.route('/student')
+def student():
+    return render_template('student.html')
+
+@socketio.on('transcribe')
+def handle_transcribe(data):
+    global transcription
+    transcription += data['text']
+    emit('update_transcription', {'text': transcription}, broadcast=True)
+
+@app.route('/download')
+def download():
+    global transcription
+    pdf_path = "transcription.pdf"
+    pdfkit.from_string(transcription, pdf_path)
+    return send_file(pdf_path, as_attachment=True)
+
+if __name__ == '__main__':
+    app.run(debug=True)
