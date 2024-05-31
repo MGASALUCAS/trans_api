@@ -23,12 +23,38 @@ This Flask application provides a platform for teachers to transcribe their spee
 
 Ensure you have the following installed:
 
-- Python 3.8 or higher
+- Python 3.9.10 
 - pip
 - wkhtmltopdf
 
 ### Clone the Repository
 
 ```sh
-git clone https://github.com/your-username/flask-audio-transcription.git
-cd flask-audio-transcription
+git clone https://github.com/MGASALUCAS/trans_api.git
+cd trans_api
+```
+
+### Install Dependencies
+
+```
+ pip install Flask Flask-SocketIO pdfkit flask_login
+```
+
+### Running the app.
+
+```
+python main.py
+
+```
+
+### Usage
+#### Teacher's Page
+-   Navigate to http://localhost:5000/instructor
+-   Register or log in as an instructor
+-   Start speaking and see real-time transcriptions
+
+#### Student's Page
+-   Navigate to http://localhost:5000/student
+-   View real-time transcriptions
+-   Click the download button to save the transcription as a PDF
+
