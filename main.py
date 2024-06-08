@@ -115,7 +115,7 @@ def signin():
         if user and check_password_hash(user[3], password):
             user_obj = User(id=user[0], name=user[1], email=user[2])
             login_user(user_obj)
-            return redirect(url_for('/'))
+            return redirect(url_for('student'))
         else:
             error = "Invalid username or password"
             return render_template('signin.html', error=error)
@@ -146,4 +146,4 @@ def download():
     return send_file(pdf_path, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
