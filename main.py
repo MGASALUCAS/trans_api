@@ -7,7 +7,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from create_database import create_connection, create_table, create_table2
 from flask_socketio import SocketIO, emit
 import pdfkit
-# from trans_api import start_background_thread
 
 
 app = Flask(__name__)
@@ -36,9 +35,17 @@ def index():
         email = request.form['Email']
         password = request.form['Password2']
 
+        # Check if any of the fields are empty
+        if not name or not email or not password:
+            fill_error = "All fields are required"
+            return render_template('login.html', fill_error=fill_error)
+        else:
+            pass
+
         conn = create_connection()
         c = conn.cursor()
 
+        # Check if the user already exists
         c.execute('SELECT * FROM students WHERE name = ?', (name,))
         existing_user = c.fetchone()
 
@@ -47,6 +54,7 @@ def index():
             conn.close()
             return render_template('login.html', error=error)
         else:
+            # Hash the password and insert the new user into the database
             hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
             c.execute('''INSERT INTO students (name, email, password) 
                          VALUES (?, ?, ?)''', (name, email, hashed_password))
@@ -63,6 +71,14 @@ def instructor():
         name = request.form['Username']
         email = request.form['Email']
         password = request.form['Password2']
+
+
+        # Check if any of the fields are empty
+        if not name or not email or not password:
+            fill_error = "All fields are required"
+            return render_template('login.html', fill_error=fill_error)
+        else:
+            pass
 
         conn = create_connection()
         c = conn.cursor()

@@ -43,6 +43,10 @@
 
         <form class="card card-md" method="POST" novalidate enctype="multipart/form-data">
           <div class="card-body">
+            {% if error %}
+            <div class="alert alert-danger">{{ fill_error }}</div>
+            {% endif %}
+
             <h2 class="card-title text-center mb-4">Hearing impaired learning assistant:</h2>
 
             <div class="mb-3">
