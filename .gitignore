@@ -2,3 +2,4 @@ __pycache__/
 .git/
 main.py
 env/
+.pdf

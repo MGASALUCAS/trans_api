@@ -16,6 +16,31 @@
             <a href="/download" class="btn btn-primary btn-block">Download as PDF</a>
         </div>
     </div>
+
+    <!-- Table for displaying downloaded sessions -->
+     <h2 class="text-center mt-5">Previous Class Session: </h2>
+
+     <div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Date</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in downloaded_files %}
+                <tr>
+                    <td>{{ file.name }}</td>
+                    <td>{{ file.date }}</td>
+                    <td>{{ file.time }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+     </div>
+
     <script>
         var socket = io.connect('http://' + document.domain + ':' + location.port);
         var transcriptionBox = document.getElementById("transcription");

@@ -12,6 +12,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from flask_socketio import SocketIO, emit, join_room, leave_room
 
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+import os
+from datetime import datetime
+
 
 students_connected = -1
 
@@ -159,6 +166,18 @@ def lecture():
 
 @app.route('/student')
 def student():
+    # Retrieve list of downloaded files
+    downloaded_files = []
+    folder_path = os.path.join(os.getcwd(), 'saved_session')
+    if os.path.exists(folder_path):
+        files = os.listdir(folder_path)
+        for file_name in files:
+            file_path = os.path.join(folder_path, file_name)
+            timestamp = os.path.getmtime(file_path)
+            date = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+            time = datetime.fromtimestamp(timestamp).strftime('%H:%M:%S')
+            downloaded_files.append({'name': file_name, 'date': date, 'time': time})
+            
     return render_template('student.html')
 
 @socketio.on('transcribe')
@@ -181,21 +200,55 @@ def handle_disconnect():
     students_connected -= 1
     emit('update_student_count', students_connected, broadcast=True)
 
+
 @app.route('/download')
 def download():
     global transcription
+    
+    # Set up styles for the PDF content
+    styles = getSampleStyleSheet()
+    style_heading = styles['Heading1']
+    style_body = styles['BodyText']
+    style_border = ParagraphStyle(name='Border', borderPadding=10, borderColor=colors.black, borderWidth=1)
+
+    # Create a PDF buffer
     pdf_buffer = BytesIO()
-    c = canvas.Canvas(pdf_buffer, pagesize=letter)
-    c.drawString(100, 750, "Transcription:")
-    lines = transcription.split('\n')
-    y = 730
-    for line in lines:
-        c.drawString(100, y, line)
-        y -= 15
-    c.showPage()
-    c.save()
-    pdf_buffer.seek(0)
-    return send_file(pdf_buffer, as_attachment=True, download_name='transcription.pdf', mimetype='application/pdf')
+
+    # Create a PDF document
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+    story = []
+
+    # Add title to the document
+    story.append(Paragraph("Transcription:", style_heading))
+
+    # Add a border around the transcription content
+    content = "<br/>".join(transcription.split('\n'))  # Convert newlines to HTML line breaks
+    bordered_content = Paragraph(content, style_border)
+    story.append(bordered_content)
+
+    # Add a spacer to create some space between content
+    story.append(Spacer(1, 12))
+
+    # Build the PDF document
+    doc.build(story)
+
+    # Reset transcription after generating the PDF
+    transcription = ""
+
+    # Save the PDF in the 'saved_session' folder
+    folder_path = os.path.join(os.getcwd(), 'saved_session')
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    filename = f"transcription_{timestamp}.pdf"
+    file_path = os.path.join(folder_path, filename)
+
+    with open(file_path, 'wb') as f:
+        f.write(pdf_buffer.getvalue())
+
+    # Return the PDF file path
+    return file_path
 
 
 if __name__ == '__main__':
