@@ -2,4 +2,5 @@ __pycache__/
 .git/
 main.py
 env/
+saved_sessions/
 .pdf

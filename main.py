@@ -177,7 +177,7 @@ def student():
             date = datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
             time = datetime.fromtimestamp(timestamp).strftime('%H:%M:%S')
             downloaded_files.append({'name': file_name, 'date': date, 'time': time})
-            
+
     return render_template('student.html')
 
 @socketio.on('transcribe')
@@ -185,7 +185,6 @@ def handle_transcribe(data):
     global transcription
     transcription += data['text']
     emit('update_transcription', {'text': transcription}, broadcast=True)
-
 
 
 @socketio.on('connect')
@@ -247,8 +246,9 @@ def download():
     with open(file_path, 'wb') as f:
         f.write(pdf_buffer.getvalue())
 
-    # Return the PDF file path
-    return file_path
+    # Return the PDF file path and success message.
+    success_message = f"Your session document has been saved as '{filename}'"
+    return redirect(url_for('student', success_message=success_message))
 
 
 if __name__ == '__main__':
