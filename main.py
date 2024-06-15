@@ -166,7 +166,7 @@ def lecture():
 
 @app.route('/student')
 def student():
-    # Retrieve list of downloaded files
+    # A function to retrieve list of downloaded files
     downloaded_files = []
     folder_path = os.path.join(os.getcwd(), 'saved_session')
     if os.path.exists(folder_path):
@@ -178,7 +178,9 @@ def student():
             time = datetime.fromtimestamp(timestamp).strftime('%H:%M:%S')
             downloaded_files.append({'name': file_name, 'date': date, 'time': time})
 
-    return render_template('student.html')
+            print(downloaded_files)
+
+    return render_template('student.html', downloaded_files=downloaded_files, enumerate=enumerate)
 
 @socketio.on('transcribe')
 def handle_transcribe(data):
@@ -199,6 +201,11 @@ def handle_disconnect():
     students_connected -= 1
     emit('update_student_count', students_connected, broadcast=True)
 
+@app.route('/view/<filename>')
+def view_file(filename):
+    folder_path = os.path.join(os.getcwd(), 'saved_session')
+    file_path = os.path.join(folder_path, filename)
+    return send_file(file_path)
 
 @app.route('/download')
 def download():
@@ -218,7 +225,7 @@ def download():
     story = []
 
     # Add title to the document
-    story.append(Paragraph("Transcription:", style_heading))
+    story.append(Paragraph("Below is the class Session as Recorded:", style_heading))
 
     # Add a border around the transcription content
     content = "<br/>".join(transcription.split('\n'))  # Convert newlines to HTML line breaks
@@ -240,7 +247,7 @@ def download():
         os.makedirs(folder_path)
 
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    filename = f"transcription_{timestamp}.pdf"
+    filename = f"Class_session_on_{timestamp}.pdf"
     file_path = os.path.join(folder_path, filename)
 
     with open(file_path, 'wb') as f:
