@@ -2,20 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Teacher's Page</title>
+    <title>Instructor Page</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.min.js"></script>
 </head>
 <body>
     <div class="container">
-        
-        <h1 class="text-center mt-5">Teacher's Page</h1>
+        <h1 class="text-center mt-5">Instructor Page</h1>
         <div class="form-group">
             <textarea id="textbox" rows="6" class="form-control" readonly></textarea>
         </div>
         <div class="form-group">
             <button id="start-btn" class="btn btn-danger btn-block">Start</button>
             <p id="instructions">Press the Start button</p>
+        </div>
+        <div class="form-group">
+            <p id="student-count" class="text-center">Students Connected: 0</p>
         </div>
     </div>
     <script>
@@ -51,6 +53,10 @@
         document.getElementById("start-btn").onclick = function() {
             recognition.start();
         }
+
+        socket.on('update_student_count', function(count) {
+            document.getElementById('student-count').textContent = 'Students Connected: ' + count;
+        });
     </script>
 </body>
 </html>

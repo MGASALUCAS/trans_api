@@ -7,6 +7,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from create_database import create_connection, create_table, create_table2
 from flask_socketio import SocketIO, emit
 import pdfkit
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from flask_socketio import SocketIO, emit, join_room, leave_room
+
+
+students_connected = -1
 
 
 app = Flask(__name__)
@@ -72,7 +79,6 @@ def instructor():
         email = request.form['Email']
         password = request.form['Password2']
 
-
         # Check if any of the fields are empty
         if not name or not email or not password:
             fill_error = "All fields are required"
@@ -118,6 +124,13 @@ def signin():
         name = request.form['Username']
         password = request.form['Password2']
 
+        # Check if any of the fields are empty
+        if not name or not password:
+            fill_error = "All fields are required"
+            return render_template('login.html', fill_error=fill_error)
+        else:
+            pass
+
         print(name, password)
 
         conn = create_connection()
@@ -154,12 +167,36 @@ def handle_transcribe(data):
     transcription += data['text']
     emit('update_transcription', {'text': transcription}, broadcast=True)
 
+
+
+@socketio.on('connect')
+def handle_connect():
+    global students_connected
+    students_connected += 1
+    emit('update_student_count', students_connected, broadcast=True)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    global students_connected
+    students_connected -= 1
+    emit('update_student_count', students_connected, broadcast=True)
+
 @app.route('/download')
 def download():
     global transcription
-    pdf_path = "transcription.pdf"
-    pdfkit.from_string(transcription, pdf_path)
-    return send_file(pdf_path, as_attachment=True)
+    pdf_buffer = BytesIO()
+    c = canvas.Canvas(pdf_buffer, pagesize=letter)
+    c.drawString(100, 750, "Transcription:")
+    lines = transcription.split('\n')
+    y = 730
+    for line in lines:
+        c.drawString(100, y, line)
+        y -= 15
+    c.showPage()
+    c.save()
+    pdf_buffer.seek(0)
+    return send_file(pdf_buffer, as_attachment=True, download_name='transcription.pdf', mimetype='application/pdf')
+
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
