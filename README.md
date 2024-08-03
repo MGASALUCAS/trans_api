@@ -1,6 +1,6 @@
 # Flask Audio Transcription Application
 
-This Flask application provides a platform for teachers to transcribe their speech in real-time. The transcriptions can be viewed by students on a separate page and downloaded as a PDF. The application also supports user registration and login for both students and instructors.
+This application provides a platform with speech transcription api for teachers to transcribe their speech in real-time. The transcriptions can be viewed by students on a separate page and downloaded as a PDF. The application also supports user registration and login for both students and instructors.
 
 ## Features
 
