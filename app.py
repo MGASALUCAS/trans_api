@@ -8,6 +8,7 @@ from create_database import create_connection, create_table, create_table2
 from flask_socketio import SocketIO, emit
 import pdfkit
 from io import BytesIO
+
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from flask_socketio import SocketIO, emit, join_room, leave_room
