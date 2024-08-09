@@ -43,7 +43,7 @@ create_table()
 create_table2()
 
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/create', methods=['POST', 'GET'])
 def index():
     if request.method == 'POST':
         name = request.form['Username']
@@ -78,7 +78,7 @@ def index():
 
             return redirect(url_for('student'))
 
-    return render_template('login.html')
+    return render_template('login2.html')
 
 @app.route('/instructor', methods=['POST', 'GET'])
 def instructor():
@@ -126,25 +126,25 @@ def load_user(user_id):
         return User(id=user[0], name=user[1], email=user[2])
     return None
 
-@app.route('/signin', methods=['POST', 'GET'])
+@app.route('/', methods=['POST', 'GET'])
 def signin():
     if request.method == 'POST':
-        name = request.form['Username']
-        password = request.form['Password2']
+        email = request.form['email']
+        password = request.form['pass']
 
         # Check if any of the fields are empty
-        if not name or not password:
+        if not email or not password:
             fill_error = "All fields are required"
             return render_template('login.html', fill_error=fill_error)
         else:
             pass
 
-        print(name, password)
+        print(email, password)
 
         conn = create_connection()
         c = conn.cursor()
 
-        c.execute('SELECT * FROM students WHERE name = ?', (name,))
+        c.execute('SELECT * FROM students WHERE email = ?', (email,))
         user = c.fetchone()
         conn.close()
         print(user[3])
@@ -152,12 +152,12 @@ def signin():
         if user and check_password_hash(user[3], password):
             user_obj = User(id=user[0], name=user[1], email=user[2])
             login_user(user_obj)
-            return redirect(url_for('student'))
+            return redirect(url_for('lecture'))
         else:
             error = "Invalid username or password"
             return render_template('signin.html', error=error)
 
-    return render_template('signin.html')
+    return render_template('login2.html')
 
 transcription = ""
 
